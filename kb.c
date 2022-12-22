@@ -805,8 +805,6 @@ void editorDrawRows(struct abuf *ab) {
 	char s[5];
 	s[4] = '\0';
 	for (int y = 0; y < E.screenrows; y++) {
-		toString(s, y + 1);
-		
 		int filerow = y + E.rowoff;
 		if (filerow >= E.numrows) {
 			if (E.numrows == 0 && y == E.screenrows / 3) {
