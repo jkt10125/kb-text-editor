@@ -880,7 +880,7 @@ void editorDrawStatusBar(struct abuf *ab) {
 	abAppend(ab, "\x1b[7m", 4);
 	char status[80], rstatus[80];
 	int len = snprintf(status, sizeof(status), "%.20s - %d lines %s", E.filename ? E.filename : "[No Name]", E.numrows, E.dirty ? "(modified)" : "");
-	int rlen = snprintf(rstatus, sizeof(rstatus), "%s | %d:%d", E.syntax ? E.syntax->filetype : "no ft", E.cy + 1, E.cx + 1);
+	int rlen = snprintf(rstatus, sizeof(rstatus), "%s | %d:%d", E.syntax ? E.syntax->filetype : "no ft", E.cy + 1, E.rx - LEFT_MARGIN + 1);
 	if (len > E.screencols) {
 		len = E.screencols;
 	}
