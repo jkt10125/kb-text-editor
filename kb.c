@@ -17,12 +17,15 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include "utils.c"
+
 /*** defines ***/
 
 #define KB_VERSION "0.0.1"
 #define KB_TAB_SIZE 4
 #define KB_QUIT_TIMES 3
 
+#define LEFT_MARGIN 6
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -428,7 +431,7 @@ int editorRowCxToRx(erow *row, int cx) {
 		}
 		rx++;
 	}
-	return rx;
+	return rx + LEFT_MARGIN;
 }
 
 int editorRowRxToCx(erow *row, int rx) {
@@ -779,7 +782,7 @@ void abFree(struct abuf *ab) {
 /*** output ***/
 
 void editorScroll() {
-	E.rx = 0;
+	E.rx = LEFT_MARGIN;
 	if (E.cy < E.numrows) {
 		E.rx = editorRowCxToRx(&E.row[E.cy], E.cx);
 	}
@@ -790,17 +793,21 @@ void editorScroll() {
 	if (E.cy >= E.rowoff + E.screenrows) {
 		E.rowoff = E.cy - E.screenrows + 1;
 	}
-	if (E.rx < E.coloff) {
-		E.coloff = E.rx;
+	if (E.rx - LEFT_MARGIN < E.coloff) {
+		E.coloff = E.rx - LEFT_MARGIN;
 	}
-	if (E.rx >= E.coloff + E.screencols) {
-		E.coloff = E.rx - E.screencols + 1;
+	if (E.rx >= E.coloff + E.screencols + LEFT_MARGIN) {
+		E.coloff = E.rx - E.screencols - LEFT_MARGIN + 1;
 	}
 }
 
 void editorDrawRows(struct abuf *ab) {
-	int y;
-	for (y = 0; y < E.screenrows; y++) {
+	char s[5];
+	s[4] = '\0';
+	for (int y = 0; y < E.screenrows; y++) {
+		toString(s, y + 1);
+		abAppend(ab, s, LEFT_MARGIN - 2);
+		abAppend(ab, "  ", 2);
 		int filerow = y + E.rowoff;
 		if (filerow >= E.numrows) {
 			if (E.numrows == 0 && y == E.screenrows / 3) {
@@ -880,6 +887,7 @@ void editorDrawStatusBar(struct abuf *ab) {
 	abAppend(ab, status, len);
 	while (len < E.screencols) {
 		if (E.screencols - len == rlen) {
+			abAppend(ab, "      ", LEFT_MARGIN);
 			abAppend(ab, rstatus, rlen);
 			break;
 		}
@@ -1126,6 +1134,7 @@ void initEditor() {
 		die("getWindowSize");
 	}
 	E.screenrows -= 2;
+	E.screencols -= LEFT_MARGIN;
 }
 
 int main(int argc, char *argv[]) {
