@@ -806,8 +806,7 @@ void editorDrawRows(struct abuf *ab) {
 	s[4] = '\0';
 	for (int y = 0; y < E.screenrows; y++) {
 		toString(s, y + 1);
-		abAppend(ab, s, LEFT_MARGIN - 2);
-		abAppend(ab, "  ", 2);
+		
 		int filerow = y + E.rowoff;
 		if (filerow >= E.numrows) {
 			if (E.numrows == 0 && y == E.screenrows / 3) {
@@ -832,6 +831,9 @@ void editorDrawRows(struct abuf *ab) {
 			}
 		}
 		else {
+			toString(s, E.row[filerow].idx + 1);
+			abAppend(ab, s, LEFT_MARGIN - 2);
+			abAppend(ab, "  ", 2);
 			int len = E.row[filerow].rsize - E.coloff;
 			if (len < 0) len = 0;
 			if (len > E.screencols) len = E.screencols;
