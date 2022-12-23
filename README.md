@@ -14,4 +14,4 @@ Install Instructions:
     + `$ git clone https://github.com/jkt10125/kb-text-editor.git`
     + `cd kb-text-editor`
     + `make`
-  + Use the file named kb to make new text files or edit the existing ones
+  + Use the file named kb to make new text files or to edit the existing ones
