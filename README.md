@@ -12,5 +12,8 @@ A simple and lightweight console based text editor which supports some of the ad
 Install Instructions:
   + Install gcc in your machine.
   + Download the source code into your system.
-  + Open the terminal in and type the command `make`
+  + Open the terminal in and type the command
+    + `$ git clone https://github.com/jkt10125/kb-text-editor.git`
+    + `cd kb-text-editor`
+    + `make`
   
