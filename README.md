@@ -15,3 +15,11 @@ Install Instructions:
     + `cd kb-text-editor`
     + `make`
   + Use the file named kb to make new text files or to edit the existing ones
+
+
+
+
+#### TODO
+  + copy-paste feature
+  + Keyword Auto completion feature
+  + Undo/Redo feature
