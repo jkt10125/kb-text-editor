@@ -26,6 +26,7 @@
 #define KB_QUIT_TIMES 3
 
 #define LEFT_MARGIN 6
+#define AUTO_INDENTATION 1
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -74,6 +75,7 @@ typedef struct erow {
 	char *chars;
 	char *render;
 	unsigned char *hl;
+	int initial_tab_count;
 	int hl_open_comment;
 } erow;
 
@@ -461,15 +463,18 @@ void editorUpdateRow(erow *row) {
 	free(row->render);
 	row->render = malloc(row->size + tabs*(KB_TAB_SIZE - 1) + 1);
 
-	int idx = 0;
+	int idx = 0, ok = 1;
+	row->initial_tab_count = 0;
 	for (int j = 0; j < row->size; j++) {
 		if (row->chars[j] == '\t') {
 			row->render[idx++] = ' ';
 			while (idx % KB_TAB_SIZE != 0) {
 				row->render[idx++] = ' ';
 			}
+			if (ok) row->initial_tab_count++;
 		}
 		else {
+			ok = 0;
 			row->render[idx++] = row->chars[j];
 		}
 	}
@@ -479,7 +484,7 @@ void editorUpdateRow(erow *row) {
 	editorUpdateSyntax(row);
 }
 
-void editorInsertRow(int at, char *s, size_t len) {
+void editorInsertRow(int at, char *s, size_t len, int auto_indent) {
 	if (at < 0 || at > E.numrows) {
 		return;
 	}
@@ -491,16 +496,27 @@ void editorInsertRow(int at, char *s, size_t len) {
 	}
 
 	E.row[at].idx = at;
-
-	E.row[at].size = len;
-	E.row[at].chars = malloc(len + 1);
-	memcpy(E.row[at].chars, s, len);
-	E.row[at].chars[len] = '\0';
+	int tab_count = 0;
+	if (auto_indent && at) {
+		tab_count = E.row[at - 1].initial_tab_count;
+		char v = E.row[at - 1].chars[E.row[at - 1].size - 1];
+		if (v == '{') {
+			tab_count++;
+		}
+	}
+	E.row[at].size = len + tab_count;
+	E.row[at].chars = malloc(E.row[at].size + 1);
+	memcpy(&E.row[at].chars[tab_count], s, len);
+	for (int i = 0; i < tab_count; i++) {
+		E.row[at].chars[i] = '\t';
+	}
+	E.row[at].chars[E.row[at].size] = '\0';
 
 	E.row[at].rsize = 0;
-	E.row[at].render = NULL;
 	E.row[at].hl = NULL;
+	E.row[at].render = NULL;
 	E.row[at].hl_open_comment = 0;
+	E.row[at].initial_tab_count = 0;
 	editorUpdateRow(&E.row[at]);
 
 	E.numrows++;
@@ -561,7 +577,7 @@ void editorRowDelChar(erow *row, int at) {
 
 void editorInsertChar(int c) {
 	if (E.cy == E.numrows) {
-		editorInsertRow(E.numrows, "", 0);
+		editorInsertRow(E.numrows, "", 0, AUTO_INDENTATION);
 	}
 	editorRowInsertChar(&E.row[E.cy], E.cx, c);
 	E.cx++;
@@ -569,18 +585,18 @@ void editorInsertChar(int c) {
 
 void editorInsertNewline() {
 	if (E.cx == 0) {
-		editorInsertRow(E.cy, "", 0);
+		editorInsertRow(E.cy, "", 0, AUTO_INDENTATION);
 	}
 	else {
 		erow *row = &E.row[E.cy];
-		editorInsertRow(E.cy + 1, &row->chars[E.cx], row->size - E.cx);
+		editorInsertRow(E.cy + 1, &row->chars[E.cx], row->size - E.cx, AUTO_INDENTATION);
 		row = &E.row[E.cy];
 		row->size = E.cx;
 		row->chars[row->size] = '\0';
 		editorUpdateRow(row);
 	}
+	E.cx = E.row[E.cy].initial_tab_count;
 	E.cy++;
-	E.cx = 0;
 }
 
 void editorDelChar() {
@@ -639,7 +655,7 @@ void editorOpen(char *filename) {
 		while (linelen > 0 && (line[linelen - 1] == '\n' || line[linelen - 1] == '\r')) {
 			linelen--;
 		}
-		editorInsertRow(E.numrows, line, linelen);
+		editorInsertRow(E.numrows, line, linelen, 0);
 	}
 	free(line);
 	fclose(fp);
