@@ -505,7 +505,7 @@ void editorInsertRow(int at, char *s, size_t len, int auto_indent) {
 		}
 	}
 	E.row[at].size = len + tab_count;
-	E.row[at].chars = malloc(E.row[at].size + 1);
+	E.row[at].chars = malloc(sizeof(char) * (E.row[at].size + 1));
 	memcpy(&E.row[at].chars[tab_count], s, len);
 	for (int i = 0; i < tab_count; i++) {
 		E.row[at].chars[i] = '\t';
@@ -589,14 +589,15 @@ void editorInsertNewline() {
 	}
 	else {
 		erow *row = &E.row[E.cy];
-		editorInsertRow(E.cy + 1, &row->chars[E.cx], row->size - E.cx, AUTO_INDENTATION);
-		row = &E.row[E.cy];
+		int initial_row_size = row->size;
 		row->size = E.cx;
+		editorInsertRow(E.cy + 1, &row->chars[E.cx], initial_row_size - E.cx, AUTO_INDENTATION);
+		row = &E.row[E.cy];
 		row->chars[row->size] = '\0';
 		editorUpdateRow(row);
 	}
-	E.cx = E.row[E.cy].initial_tab_count;
 	E.cy++;
+	E.cx = E.row[E.cy].initial_tab_count;
 }
 
 void editorDelChar() {
