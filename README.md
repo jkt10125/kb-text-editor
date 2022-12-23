@@ -4,15 +4,14 @@ A simple and lightweight console based text editor which supports some of the ad
   + Syntax Highlighting <br />
   + Auto Indentation <br />
   + Customizable Keybindings <br />
-
+  + Find word support
 
 
 
 
 Install Instructions:
-  + Install gcc in your machine.
   + Open the terminal in and type the command
     + `$ git clone https://github.com/jkt10125/kb-text-editor.git`
     + `cd kb-text-editor`
     + `make`
-  
+  + Use the file named kb to make new text files or edit the existing ones
