@@ -23,3 +23,4 @@ Install Instructions:
   + copy-paste feature
   + Keyword Auto completion feature
   + Undo/Redo feature
+  + More keybindings
