@@ -19,3 +19,4 @@ int validOpeningBracket(char c) {
 int validClosingBracket(char c) {
     return (c == ']' || c == '}' || c == ')');
 }
+
