@@ -27,6 +27,7 @@
 
 #define LEFT_MARGIN 6
 #define AUTO_INDENTATION 1
+#define AUTO_BRACKETS 1
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -461,7 +462,7 @@ void editorUpdateRow(erow *row) {
 	}
 
 	free(row->render);
-	row->render = malloc(row->size + tabs*(KB_TAB_SIZE - 1) + 1);
+	row->render = malloc(row->size + tabs * (KB_TAB_SIZE - 1) + 1);
 
 	int idx = 0, ok = 1;
 	row->initial_tab_count = 0;
@@ -484,9 +485,12 @@ void editorUpdateRow(erow *row) {
 	editorUpdateSyntax(row);
 }
 
-void editorInsertRow(int at, char *s, size_t len, int auto_indent) {
+void editorInsertRow(int at, int tab_count, char *s, size_t len) {
 	if (at < 0 || at > E.numrows) {
 		return;
+	}
+	if (tab_count < 0) {
+		tab_count = 0;
 	}
 
 	E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
@@ -496,14 +500,6 @@ void editorInsertRow(int at, char *s, size_t len, int auto_indent) {
 	}
 
 	E.row[at].idx = at;
-	int tab_count = 0;
-	if (auto_indent && at) {
-		tab_count = E.row[at - 1].initial_tab_count;
-		char v = E.row[at - 1].chars[E.row[at - 1].size - 1];
-		if (v == '{') {
-			tab_count++;
-		}
-	}
 	E.row[at].size = len + tab_count;
 	E.row[at].chars = malloc(sizeof(char) * (E.row[at].size + 1));
 	memcpy(&E.row[at].chars[tab_count], s, len);
@@ -577,7 +573,7 @@ void editorRowDelChar(erow *row, int at) {
 
 void editorInsertChar(int c) {
 	if (E.cy == E.numrows) {
-		editorInsertRow(E.numrows, "", 0, AUTO_INDENTATION);
+		editorInsertRow(E.numrows, 0, "", 0);
 	}
 	editorRowInsertChar(&E.row[E.cy], E.cx, c);
 	E.cx++;
@@ -585,19 +581,41 @@ void editorInsertChar(int c) {
 
 void editorInsertNewline() {
 	if (E.cx == 0) {
-		editorInsertRow(E.cy, "", 0, AUTO_INDENTATION);
+		editorInsertRow(E.cy, 0, "", 0);
+		E.cy++;
 	}
 	else {
 		erow *row = &E.row[E.cy];
-		int initial_row_size = row->size;
-		row->size = E.cx;
-		editorInsertRow(E.cy + 1, &row->chars[E.cx], initial_row_size - E.cx, AUTO_INDENTATION);
+		int tab_count = 0;
+
+		if (AUTO_INDENTATION) {
+			if (E.cx >= E.row[E.cy].initial_tab_count) {
+				tab_count = E.row[E.cy].initial_tab_count;
+			}
+			char c = E.row[E.cy].chars[E.cx - 1];
+			if (validOpeningBracket(c)) {
+				tab_count++;
+			}
+		}
+		editorInsertRow(E.cy + 1, tab_count, &row->chars[E.cx], row->size - E.cx);
 		row = &E.row[E.cy];
+		row->size = E.cx;
 		row->chars[row->size] = '\0';
 		editorUpdateRow(row);
+		E.cx = tab_count;
+		E.cy++;
+		if (AUTO_INDENTATION) {
+			row = &E.row[E.cy];
+			if (validClosingBracket(row->chars[E.cx])) {
+				editorInsertRow(E.cy + 1, tab_count - 1, &row->chars[E.cx], row->size - E.cx);
+				row = &E.row[E.cy];
+				row->size = E.cx;
+				row->chars[row->size] = '\0';
+				editorUpdateRow(row);
+			}
+		}
 	}
-	E.cy++;
-	E.cx = E.row[E.cy].initial_tab_count;
+	
 }
 
 void editorDelChar() {
@@ -656,7 +674,7 @@ void editorOpen(char *filename) {
 		while (linelen > 0 && (line[linelen - 1] == '\n' || line[linelen - 1] == '\r')) {
 			linelen--;
 		}
-		editorInsertRow(E.numrows, line, linelen, 0);
+		editorInsertRow(E.numrows, 0, line, linelen);
 	}
 	free(line);
 	fclose(fp);
@@ -1048,6 +1066,23 @@ void editorMoveCursor(int key) {
 	}
 }
 
+void editorProcessClosingBrackets(char c) {
+	if ((E.cy == E.numrows || (E.row[E.cy].chars[E.cx] != c)) && (!AUTO_BRACKETS)) {
+		editorInsertChar(c);
+	}
+	else {
+		E.cx++;
+	}
+}
+
+void editorProcessOpeningBrackets(char c) {
+	editorInsertChar(c);
+	if (AUTO_BRACKETS) {
+		editorInsertChar(pairOf(c));
+		E.cx--;
+	}
+}
+
 void editorProcessKeypress() {
 	static int quit_times = KB_QUIT_TIMES - 1;
 
@@ -1121,6 +1156,18 @@ void editorProcessKeypress() {
 			break;
 
 		case '\x1b':
+			break;
+
+		case '{':
+		case '[':
+		case '(':
+			editorProcessOpeningBrackets(c);
+			break;
+
+		case '}':
+		case ']':
+		case ')':
+			editorProcessClosingBrackets(c);
 			break;
 
 		default:

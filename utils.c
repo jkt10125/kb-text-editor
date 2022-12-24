@@ -5,3 +5,17 @@ void toString (char *s, int n) {
         n /= 10;
     }
 }
+
+char pairOf(char c) {
+    if (c == '{') return '}';
+    if (c == '(') return ')';
+    return ']';
+}
+
+int validOpeningBracket(char c) {
+    return (c == '[' || c == '{' || c == '(');
+}
+
+int validClosingBracket(char c) {
+    return (c == ']' || c == '}' || c == ')');
+}
