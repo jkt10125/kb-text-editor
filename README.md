@@ -21,7 +21,7 @@ A simple and lightweight console based text editor which supports some of the ad
 
 
 #### TODO
-  + copy-paste feature
+  + copy-pastefeature
   + Keyword Auto completion feature
   + Undo/Redo feature
   + More keybindings
