@@ -5,7 +5,7 @@ A simple and lightweight console based text editor which supports some of the ad
   + Auto Indentation <br />
   + Customizable Keybindings <br />
   + Find word support
-
+  + Auto-Parentheses Feature
 
 
 
