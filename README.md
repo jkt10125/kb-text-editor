@@ -1,6 +1,6 @@
 # kb-text-editor
 
-#### Keyfeatures
+#### Key Features
 A simple and lightweight console based text editor which supports some of the advanced features such as: <br />
   + Syntax Highlighting <br />
   + Auto Indentation <br />
